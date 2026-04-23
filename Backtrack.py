@@ -21,7 +21,7 @@ class BacktrackSolver:
         self.steps = 0
         self.backtracks = 0
 
-    def solve(self, board) -> bool:
+    def solve(self) -> bool:
         """
         A recursive backtracking function to solve the Sudoku board
         Algorithm Steps:
@@ -46,7 +46,7 @@ class BacktrackSolver:
                 self.board.board[row][col] = i
                 self.steps += 1
 
-                if self.solve(board):
+                if self.solve():
                     return True
 
                 self.board.board[row][col] = 0  # all options were exhausted, undo the last change
@@ -61,7 +61,7 @@ class BacktrackSolver:
         """
 
         start = time.perf_counter()
-        self.solve(self.board)
+        self.solve()
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         return PerformanceMetrics(
