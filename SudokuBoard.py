@@ -126,6 +126,24 @@ class SudokuBoard:
 
         return False
 
+    def count_solutions(self, limit=2):
+        empty = self.find_empty()
+        if empty is None:
+            return 1
+
+        row, col = empty
+        count = 0
+
+        for num in range(1, self.size + 1):
+            if self.is_valid(row, col, num):
+                self.board[row][col] = num
+                count += self.count_solutions(limit)
+                self.board[row][col] = 0
+
+                if count >= limit:
+                    return count
+
+        return count
 
     def generate_puzzle(self, clues):
         """
@@ -134,23 +152,27 @@ class SudokuBoard:
         :parameter clues: Number of clues to generate the puzzle.
         :return:
         """
-        board = SudokuBoard()
+
 
         #Fill the board completely
-        board._fill_board()
+        self._fill_board()
 
-        num_clues = clues
-        total_cells = board.size * board.size
-        cells_to_remove = total_cells - num_clues
-
-        #Randomly remove answered cells
-        positions = [(i, j) for i in range(board.size) for j in range(board.size)]
+        positions = [(i, j) for i in range(self.size) for j in range(self.size)]
         random.shuffle(positions)
 
-        for i in range(cells_to_remove):
-            row, col = positions[i]
-            board.board[row][col] = 0
+        for row, col in positions:
+            temp = self.board[row][col]
+            self.board[row][col] = 0
 
-        return board
+            # Check if uniqueness is broken
+            board_copy = self.copy()
+            if board_copy.count_solutions(limit=2) != 1:
+                self.board[row][col] = temp  # undo removal
 
+            # Stop when desired number of clues reached
+            filled = sum(cell != 0 for r in self.board for cell in r)
+            if filled <= clues:
+                break
+
+        return self
 
