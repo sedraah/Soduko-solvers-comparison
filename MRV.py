@@ -20,42 +20,44 @@ class MRVSolver(BacktrackSolver):
             None       → no empty cells, board is complete
             (-1, -1)   → a cell has 0 legal values, dead end
         """
-        min_count = float('inf')
+        min_count = float('inf') # the first empty cell found always wins the first comparison
         best_cell = None
 
         for i in range(self.board.size):
             for j in range(self.board.size):
                 if self.board.board[i][j] == 0:
                     count = sum(
-                        1 for num in range(1, self.board.size + 1)
-                        if self.board.is_valid(i, j, num)
+                        1 for num in range(1, 10)
+                        if self.board.is_valid(i, j, num) # for each number and counts the ones that pass. This count is the cell's domain size.
                     )
-                    if count == 0:
+                    if count == 0:            # If a cell has zero legal values, the current board state is already unsolvable
                         return (-1, -1)       # dead end detected early
-                    if count < min_count:
+                    if count < min_count:     # Keeps updating whenever a more constrained cell is found. 
                         min_count = count
-                        best_cell = (i, j)
+                        best_cell = (i, j)    # best_cell holds the cell with the fewest options.
 
         return best_cell  # None if no empty cells found
 
-    def solve(self, board) -> bool:
+    def solve(self) -> bool:
         """
         Same recursive backtracking as BacktrackSolver,
         but uses find_empty_mrv() instead of find_empty().
         """
-        empty = self.find_empty_mrv()
+        empty = self.find_empty_mrv() # access the board via MRV file not SudokuBoard
 
-        if empty is None:      return True   # board complete
-        if empty == (-1, -1):  return False  # dead end, backtrack
+        if empty is None:      
+            return True   # board complete
+        if empty == (-1, -1):  
+            return False  # dead end, backtrack
 
         row, col = empty
 
-        for num in range(1, self.board.size + 1):
-            if self.board.is_valid(row, col, num):
-                self.board.board[row][col] = num
+        for i in range(1, 10):
+            if self.board.is_valid(row, col, i):
+                self.board.board[row][col] = i
                 self.steps += 1
 
-                if self.solve(board):
+                if self.solve():
                     return True
 
                 self.board.board[row][col] = 0   # undo, backtrack
@@ -63,4 +65,4 @@ class MRVSolver(BacktrackSolver):
 
         return False
 
-    # run() is fully inherited from BacktrackSolver, nothing to add
+    # run() is fully inherited from BacktrackSolver
