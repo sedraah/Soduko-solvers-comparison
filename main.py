@@ -4,16 +4,14 @@ main.py
 CCS 270 – Data Structures and Algorithms
 Empirical Performance Analysis of Sudoku Solving Algorithms
 
-Experimental Setup  (mirrors TestBacktracking.py)
+Experimental Setup  
 --------------------------------------------------
-  Input sizes : num_clues from 50 down to 17  (range(50, 16, -1))
-  Runs/size   : RUNS_PER_SIZE independent puzzles per clue count
+  Input sizes : num_clues from 50 down to 17  
+  Runs/size   : generates RUNS_PER_SIZE independent puzzles per clue count
   Solvers     : Backtracking | MRV + Backtracking | Constraint Propagation
 
 Outputs
 -------
-  Console  : per-solver table  (time max/avg/std, steps max/avg/std,
-                                 backtracks max/avg/std)
   Files    : {SolverName}ExecutionData.txt   — one per solver
              timeLineChart.png               — avg execution time comparison
              stepsLineChart.png              — avg steps comparison
