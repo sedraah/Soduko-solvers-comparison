@@ -42,24 +42,22 @@ def grid_values(grid):
     """
     return dict(zip(CELLS, grid))
 
-
-# ==============================
 # Core CSP operations
-# ==============================
 
-def assign(values, s, d):
+def assign(values, s, d, steps):
     """
     Assign digit d to cell s and propagate constraints.
     """
+    steps[0] += 1  # count assignments
 
     other = values[s].replace(d, "")
     for d2 in other:
-        if not eliminate(values, s, d2):
+        if not eliminate(values, s, d2, steps):
             return False
     return values
 
 
-def eliminate(values, s, d):
+def eliminate(values, s, d, steps):
     """
     Eliminate digit d from cell s and propagate.
     """
@@ -76,7 +74,7 @@ def eliminate(values, s, d):
     if len(values[s]) == 1:
         d2 = values[s]
         for p in PEERS[s]:
-            if not eliminate(values, p, d2):
+            if not eliminate(values, p, d2, steps):
                 return False
 
     # Only place for digit in unit
@@ -86,7 +84,7 @@ def eliminate(values, s, d):
         if len(places) == 0:
             return False
         elif len(places) == 1:
-            if not assign(values, places[0], d):
+            if not assign(values, places[0], d, steps):
                 return False
 
     return values
@@ -108,11 +106,9 @@ def search(values, steps, backtracks):
     _, s = min((len(values[s]), s) for s in CELLS if len(values[s]) > 1)
 
     for d in values[s]:
-        steps[0] += 1 #count assignments
-
         new_values = values.copy()
 
-        result = assign(new_values, s, d)
+        result = assign(new_values, s, d, steps)
         if result:
             attempt = search(result, steps, backtracks)
             if attempt:
@@ -123,7 +119,6 @@ def search(values, steps, backtracks):
     return False
 
 # Main solver function
-
 
 def solve_constraint_propagation(board) -> PerformanceMetrics:
     """
@@ -146,7 +141,7 @@ def solve_constraint_propagation(board) -> PerformanceMetrics:
     # Initial constraint propagation
     for s, d in grid_values(grid).items():
         if d in "123456789":
-            if not assign(values, s, d):
+            if not assign(values, s, d, steps):
                 elapsed_ms = (time.perf_counter() - start_time) * 1000
                 return PerformanceMetrics(steps[0], backtracks[0], elapsed_ms)
 
