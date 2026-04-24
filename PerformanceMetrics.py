@@ -19,6 +19,8 @@ plot_comparison_charts(results_by_solver, output_dir)
 
 import statistics
 import os
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from typing import List
 
 
@@ -157,7 +159,7 @@ class EmpiricalResults:
         safe_name = self.algorithm_name.replace(" ", "_").replace("+", "Plus")
         path = os.path.join(output_dir, f"{safe_name}ExecutionData.txt")
 
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(self._build_table_lines()) + "\n")
 
         print(f"  → Saved execution data to: {path}")
@@ -176,31 +178,34 @@ class EmpiricalResults:
         return [r[1][metric][stat] for r in self._rows]
 
 
+    def empty_cells(self) -> list[int]:
+        total = 81  # fixed Sudoku size
+        return [total - r[0] for r in self._rows]
 # ──────────────────────────────────────────────────────────────────────────────
 # Cross-solver comparison charts
 # ──────────────────────────────────────────────────────────────────────────────
 
 # Colour palette and display names for the three expected solvers
 _SOLVER_STYLES = {
-    "Backtracking":          {"color": "#dc2626", "marker": "^"},   # red
-    "MRV + Backtracking":    {"color": "#2563eb", "marker": "o"},   # blue
-    "Constraint Propagation":{"color": "#16a34a", "marker": "s"},   # green
+    "Backtracking":          {"color": "#dc2626"},
+    "MRV + Backtracking":    {"color": "#2563eb"},
+    "Constraint Propagation":{"color": "#16a34a"},
 }
 
 _METRIC_META = {
     "time_ms": {
         "ylabel": "Execution Time (ms)",
-        "title":  "Execution Time vs. Number of Clues",
+        "title":  "Execution Time vs. Number of Empty Cells",
         "file":   "timeLineChart",
     },
     "steps": {
         "ylabel": "Steps",
-        "title":  "Steps vs. Number of Clues",
+        "title":  "Steps vs. Number of Empty Cells",
         "file":   "stepsLineChart",
     },
     "backtracks": {
         "ylabel": "Backtracks",
-        "title":  "Backtracks vs. Number of Clues",
+        "title":  "Backtracks vs. Number of Empty Cells",
         "file":   "backtracksLineChart",
     },
 }
@@ -224,8 +229,6 @@ def plot_comparison_charts(
     output_dir : str
         Directory in which to save the PNG files.
     """
-    import matplotlib.pyplot as plt
-
     os.makedirs(output_dir, exist_ok=True)
 
     for metric, meta in _METRIC_META.items():
@@ -236,32 +239,29 @@ def plot_comparison_charts(
         for solver_name, emp_results in results_by_solver.items():
             style = _SOLVER_STYLES.get(
                 solver_name,
-                {"color": "#888888", "marker": "D"},
+                {"color": "#888888"},
             )
-            clues  = emp_results.clues()
+            clues = list(map(int, emp_results.empty_cells()))
             values = emp_results.metric_series(metric, stat)
 
             ax.plot(
                 clues, values,
                 color       = style["color"],
-                marker      = style["marker"],
                 linewidth   = 2.0,
-                markersize  = 6,
-                markerfacecolor  = "#ffffff",
-                markeredgecolor  = style["color"],
-                markeredgewidth  = 1.8,
                 label       = solver_name,
             )
 
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
         # Reverse x-axis: more clues (easier) on the left → harder on the right
-        ax.invert_xaxis()
+        #ax.invert_xaxis()
 
         ax.set_title(
             meta["title"],
             fontsize=14, fontweight="bold", color="#111111", pad=14,
         )
         ax.set_xlabel(
-            "Number of Clues  (← easier | harder →)",
+            "Number of Empty Cells",
             fontsize=11, color="#444444",
         )
         ax.set_ylabel(meta["ylabel"], fontsize=11, color="#444444")
