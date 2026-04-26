@@ -3,11 +3,11 @@ from Backtrack import BacktrackSolver
 
 class MRVSolver(BacktrackSolver):
     """
-    MRV-enhanced backtracking Sudoku solver.
+    MRV backtracking Sudoku solver.
 
     Inherits everything from BacktrackSolver.
     Only overrides solve() to use MRV cell selection
-    instead of the first-empty-cell strategy.
+    instead of the first empty cell strategy.
     """
 
     def find_empty_mrv(self):
@@ -16,9 +16,9 @@ class MRVSolver(BacktrackSolver):
         fewest legal values remaining (Most Constrained Variable).
 
         Returns:
-            (row, col) → best cell to fill next
-            None       → no empty cells, board is complete
-            (-1, -1)   → a cell has 0 legal values, dead end
+            (row, col) -> best cell to fill next
+            None       -> no empty cells, board is complete
+            (-1, -1)   -> a cell has 0 legal values, dead end
         """
         min_count = float('inf') # the first empty cell found always wins the first comparison
         best_cell = None
