@@ -2,7 +2,6 @@ import time
 from SudokuBoard import SudokuBoard
 from PerformanceMetrics import PerformanceMetrics
 
-
 class BacktrackSolver:
     """
     Baseline brute-force backtracking Sudoku solver.
@@ -40,9 +39,9 @@ class BacktrackSolver:
         else:
             row, col = empty  # position of the empty cell
 
-        for i in range(1, 10):
+        for num in range(1, self.board.size + 1):
 
-            if self.board.is_valid(row, col, i):
+            if self.board.is_valid(row, col, num):
                 self.board.board[row][col] = i
                 self.steps += 1
 
@@ -69,8 +68,3 @@ class BacktrackSolver:
             backtracks=self.backtracks,
             time_ms=elapsed_ms
         )
-
-
-
-
-
