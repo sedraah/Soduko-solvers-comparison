@@ -1,20 +1,18 @@
 """
-PerformanceMetrics.py
----------------------
-CCS 270 – Data Structures and Algorithms
-Performance Metrics Collection and Reporting
+This file is responsible for measuring performance and reporting results.
 
-Classes
--------
-PerformanceMetrics   – stores metrics for a single solver run
-MetricsCollector     – aggregates runs for one (solver, input-size) pair
-EmpiricalResults     – aggregates MetricsCollectors across input sizes for one solver
+Metrics Stored:
+steps = how many assignments/operations the solver counted.
+backtracks = how many times the solver had to undo all their assignments due to invalid moves
+time_ms = how long the solver took in milliseconds
 
-Module-level helpers
---------------------
-plot_comparison_charts(results_by_solver, output_dir)
-    Produces one clustered line chart per metric (time / steps / backtracks)
-    comparing all solvers over the clue-count range and saves each chart.
+Classes:
+PerformanceMetrics = stores metrics for a single solver run.
+MetricsCollector = aggregates runs for one (solver, input-size) pair
+EmpiricalResults = aggregates MetricCollectors across input sizes for one solver.
+
+The output result is a table with the metrics for each algorithm then three charts
+comparing each metric across the three algorithms.
 """
 
 import statistics
@@ -23,13 +21,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from typing import List
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Single-run container
-# ──────────────────────────────────────────────────────────────────────────────
-
 class PerformanceMetrics:
-    """Store performance metrics for a single algorithm run."""
+    """
+    Store performance metrics for a single algorithm run.
+    """
 
     def __init__(self, steps: int = 0, backtracks: int = 0, time_ms: float = 0.0):
         self.steps      = steps
@@ -37,12 +32,10 @@ class PerformanceMetrics:
         self.time_ms    = time_ms
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Multi-run aggregator for one (solver, input-size) pair
-# ──────────────────────────────────────────────────────────────────────────────
-
 class MetricsCollector:
-    """Collect and aggregate PerformanceMetrics across multiple runs."""
+    """
+    Collect and aggregate PerformanceMetrics across multiple runs.
+    """
 
     def __init__(self):
         self.runs: List[PerformanceMetrics] = []
@@ -52,10 +45,7 @@ class MetricsCollector:
 
     def get_statistics(self) -> dict | None:
         """
-        Returns max / avg / stdev for each of the three metrics:
-        time_ms, steps, backtracks.
-
-        Returns None when no runs have been recorded.
+        returns: max (worst-case), average, and standard deviation for each of the three metrics.
         """
         if not self.runs:
             return None
@@ -74,27 +64,10 @@ class MetricsCollector:
         }
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Cross-input-size aggregator for one solver
-# ──────────────────────────────────────────────────────────────────────────────
-
 class EmpiricalResults:
     """
     Aggregate MetricsCollector results across multiple input sizes for one
     solver algorithm.
-
-    Usage
-    -----
-        results = EmpiricalResults(algorithm_name="Backtracking")
-        for num_clues in NUM_CLUES_RANGE:
-            collector = MetricsCollector()
-            for _ in range(RUNS_PER_SIZE):
-                ...
-                collector.add_run(solver.run())
-            results.add(num_clues, collector)
-
-        results.print_table()
-        results.save_to_file()
     """
 
     def __init__(self, algorithm_name: str = "Algorithm"):
@@ -107,15 +80,16 @@ class EmpiricalResults:
         if stats:
             self._rows.append((num_clues, stats))
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
-
+    # Helper Function to create table
     def _build_table_lines(self) -> list[str]:
-        """Return the full table as a list of printable strings."""
+        """
+        Return the full table as a list of printable strings.
+        """
         if not self._rows:
             return ["No data to display."]
 
         col_w  = 10
-        title  = f"  {self.algorithm_name} — Execution Data"
+        title  = f"  {self.algorithm_name} - Execution Data"
 
         header = (
             f"{'Clues':>6} | "
@@ -144,16 +118,16 @@ class EmpiricalResults:
         lines.append(sep)
         return lines
 
-    # ── Public methods ────────────────────────────────────────────────────────
-
     def print_table(self):
-        """Print the results table to stdout."""
+        """
+        Print the results table to stdout.
+        """
         print("\n" + "\n".join(self._build_table_lines()))
 
     def save_to_file(self, output_dir: str = "."):
         """
         Save the results table to a text file named
-        ``{algorithm_name}ExecutionData.txt`` inside *output_dir*.
+        {algorithm_name}ExecutionData.txt inside the output directory.
         """
         os.makedirs(output_dir, exist_ok=True)
         safe_name = self.algorithm_name.replace(" ", "_").replace("+", "Plus")
@@ -162,18 +136,18 @@ class EmpiricalResults:
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(self._build_table_lines()) + "\n")
 
-        print(f"  → Saved execution data to: {path}")
+        print(f"   Saved execution data to: {path}")
         return path
 
-    # ── Data accessors (used by plot_comparison_charts) ───────────────────────
 
+    # Data accessors used by the plotting function
     def clues(self) -> list[int]:
         return [r[0] for r in self._rows]
 
     def metric_series(self, metric: str, stat: str) -> list[float]:
         """
-        Return a list of *stat* values ('max'/'avg'/'stdev') for *metric*
-        ('time_ms'/'steps'/'backtracks') across all input sizes.
+        Return a list of statistic values (max, avg, std) for metrics
+        (time_ms,steps,backtracks) across all input sizes.
         """
         return [r[1][metric][stat] for r in self._rows]
 
@@ -181,9 +155,9 @@ class EmpiricalResults:
     def empty_cells(self) -> list[int]:
         total = 81  # fixed Sudoku size
         return [total - r[0] for r in self._rows]
-# ──────────────────────────────────────────────────────────────────────────────
-# Cross-solver comparison charts
-# ──────────────────────────────────────────────────────────────────────────────
+
+
+# Cross-solver Comparison Charts
 
 # Colour palette and display names for the three expected solvers
 _SOLVER_STYLES = {
@@ -217,7 +191,7 @@ def plot_comparison_charts(
     output_dir:   str  = ".",
 ):
     """
-    Produce one clustered line chart per metric comparing all solvers.
+    Produces one clustered line chart per metric comparing all solvers.
 
     Parameters
     ----------
@@ -253,9 +227,6 @@ def plot_comparison_charts(
 
             ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        # Reverse x-axis: more clues (easier) on the left → harder on the right
-        #ax.invert_xaxis()
-
         ax.set_title(
             meta["title"],
             fontsize=14, fontweight="bold", color="#111111", pad=14,
@@ -282,4 +253,4 @@ def plot_comparison_charts(
         out_path = os.path.join(output_dir, f"{meta['file']}.png")
         plt.savefig(out_path, dpi=150, facecolor="#ffffff")
         plt.close(fig)
-        print(f"  → Saved chart: {out_path}")
+        print(f"   Saved chart: {out_path}")
