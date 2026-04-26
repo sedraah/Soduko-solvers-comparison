@@ -148,7 +148,6 @@ class SudokuBoard:
     def generate_puzzle(self, clues):
         """
         Generate a valid Sudoku puzzle with a given number of clues.
-        // i think this doesn't create well-posed puzzles because it doesn't guarantee a unique solution
         :parameter clues: Number of clues to generate the puzzle.
         :return:
         """
