@@ -42,7 +42,7 @@ class BacktrackSolver:
         for num in range(1, self.board.size + 1):
 
             if self.board.is_valid(row, col, num):
-                self.board.board[row][col] = i
+                self.board.board[row][col] = num
                 self.steps += 1
 
                 if self.solve():
