@@ -1,8 +1,6 @@
 from PerformanceMetrics import PerformanceMetrics
 import time
 
-# Precompute structure (GLOBAL)
-
 ROWS = "ABCDEFGHI"
 COLS = "123456789"
 
@@ -25,7 +23,7 @@ PEERS = {s: set(sum(UNITS[s], [])) - {s} for s in CELLS}
 
 def board_to_grid_string(board):
     """
-    Convert SudokuBoard → string of 81 chars
+    Convert SudokuBoard to a string of 81 chars
     (row-major, 0 -> '.')
     """
     chars = []
@@ -38,15 +36,17 @@ def board_to_grid_string(board):
 
 def grid_values(grid):
     """
-    Map grid string → {cell: value}
+    Map grid string to {cell: value} pairs in a dictionary.
     """
     return dict(zip(CELLS, grid))
+
 
 # Core CSP operations
 
 def assign(values, s, d, steps):
     """
-    Assign digit d to cell s and propagate constraints.
+    Assign digit d to cell s and propagate constraints (removes it from
+    list of possibilities using eliminate()).
     """
     steps[0] += 1  # count assignments
 
@@ -66,18 +66,18 @@ def eliminate(values, s, d, steps):
 
     values[s] = values[s].replace(d, "")
 
-    # contradiction: no values left
+    # base case/contradiction: no values left, the algorithm must backtrack.
     if len(values[s]) == 0:
         return False
 
-    # If only one value remains → eliminate from peers
+    # If only one value remains, eliminate it from peers.
     if len(values[s]) == 1:
         d2 = values[s]
         for p in PEERS[s]:
             if not eliminate(values, p, d2, steps):
                 return False
 
-    # Only place for digit in unit
+    # If the digit has only one possible place in a unit (peers of cell), assign it there.
     for u in UNITS[s]:
         places = [s2 for s2 in u if d in values[s2]]
 
@@ -89,20 +89,21 @@ def eliminate(values, s, d, steps):
 
     return values
 
-# Search (MRV + propagation)
+# Search using (MRV + propagation)
 
 def search(values, steps, backtracks):
     """
-    Depth-first search with MRV + constraint propagation
+    In the case assign() and eliminate() were not enought to solve the puzzle, we use:
+    Depth-first search with minimum values heuristic (MRV) + constraint propagation
     """
     if values is False:
         return False
 
-    # solved
+    # if every cell has only one possible value, the puzzle is solved.
     if all(len(values[s]) == 1 for s in CELLS):
         return values
 
-    # MRV: choose most constrained variable
+    # MRV: choose most constrained variable (cell with the fewest possible values)
     _, s = min((len(values[s]), s) for s in CELLS if len(values[s]) > 1)
 
     for d in values[s]:
@@ -118,11 +119,11 @@ def search(values, steps, backtracks):
 
     return False
 
-# Main solver function
+# Main solver function to be plugged into main
 
 def solve_constraint_propagation(board) -> PerformanceMetrics:
     """
-    Norvig-style optimized CSP Sudoku solver.
+    Constraint Propagation Sudoku solver heavily inspired by Peter Norvig's solver.
 
     Returns:
         PerformanceMetrics only (consistent with other solvers)
@@ -132,20 +133,18 @@ def solve_constraint_propagation(board) -> PerformanceMetrics:
     steps = [0]
     backtracks = [0]
 
-    # Convert board → grid string
+    # Convert board into grid string for CSP
     grid = board_to_grid_string(board)
-
-    # Initialize domains
     values = {s: "123456789" for s in CELLS}
 
-    # Initial constraint propagation
+    # Initial constraint propagation: apply all given clues using assign()
     for s, d in grid_values(grid).items():
         if d in "123456789":
             if not assign(values, s, d, steps):
                 elapsed_ms = (time.perf_counter() - start_time) * 1000
                 return PerformanceMetrics(steps[0], backtracks[0], elapsed_ms)
 
-    # Search
+    # Search if propagation is not enough to solve.
     result = search(values, steps, backtracks)
 
     elapsed_ms = (time.perf_counter() - start_time) * 1000
