@@ -9,7 +9,6 @@ A benchmarking framework that implements and compares three Sudoku-solving algor
 - [Overview](#overview)
 - [Algorithms](#algorithms)
 - [System Design](#system-design)
-- [Project Structure](#project-structure)
 - [References](#references)
 
 ---
